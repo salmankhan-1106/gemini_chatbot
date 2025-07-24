@@ -641,7 +641,7 @@
       bottom: 0 !important;
       left: 0 !important;
       right: 0 !important;
-      padding: 15px !important;
+      padding: 15px 20px 25px 20px !important;
       background: rgba(26, 29, 35, 0.95) !important;
       backdrop-filter: blur(10px) !important;
       border-top: 1px solid rgba(100, 255, 218, 0.2) !important;
@@ -649,16 +649,17 @@
       box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
     }
 
-    .input-wrapper {
+    .input-group {
       display: flex !important;
       align-items: center !important;
+      gap: 12px !important;
       position: relative !important;
       max-width: 100% !important;
     }
 
     #user-input {
       flex: 1 !important;
-      padding: 12px 60px 12px 15px !important;
+      padding: 12px 15px !important;
       font-size: 16px !important; /* Prevents zoom on iOS */
       border-radius: 25px !important;
       border: 2px solid rgba(100, 255, 218, 0.3) !important;
@@ -676,12 +677,8 @@
     }
 
     #send-btn {
-      position: absolute !important;
-      right: 5px !important;
-      top: 50% !important;
-      transform: translateY(-50%) !important;
-      width: 40px !important;
-      height: 40px !important;
+      width: 50px !important;
+      height: 50px !important;
       border-radius: 50% !important;
       background: linear-gradient(135deg, #64ffda 0%, #12c2e9 100%) !important;
       border: none !important;
@@ -693,13 +690,19 @@
       justify-content: center !important;
       cursor: pointer !important;
       transition: all 0.3s ease !important;
-      min-width: 40px !important;
-      min-height: 40px !important;
+      min-width: 50px !important;
+      min-height: 50px !important;
+      flex-shrink: 0 !important;
+    }
+
+    #send-btn #btn-text {
+      font-size: 16px !important;
+      font-weight: bold !important;
     }
 
     #send-btn:hover, #send-btn:active {
       background: linear-gradient(135deg, #4fd1c7 0%, #0ea5e9 100%) !important;
-      transform: translateY(-50%) scale(1.05) !important;
+      transform: scale(1.05) !important;
     }
 
     /* Adjust chat history to leave space for fixed input */

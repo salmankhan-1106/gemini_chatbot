@@ -652,13 +652,15 @@
     .input-group {
       display: flex !important;
       align-items: center !important;
+      gap: 10px !important;
       position: relative !important;
       max-width: 100% !important;
     }
 
     #user-input {
       flex: 1 !important;
-      padding: 12px 60px 12px 15px !important; /* Extra right padding for button */
+      max-width: calc(100% - 60px) !important; /* Make room for button */
+      padding: 12px 15px !important;
       font-size: 16px !important; /* Prevents zoom on iOS */
       border-radius: 25px !important;
       border: 2px solid rgba(100, 255, 218, 0.3) !important;
@@ -666,7 +668,6 @@
       color: #e2e8f0 !important;
       min-height: 44px !important; /* iOS minimum touch target */
       outline: none !important;
-      width: 100% !important;
       box-sizing: border-box !important;
     }
 
@@ -676,36 +677,35 @@
     }
 
     #send-btn {
-      position: absolute !important;
-      right: 5px !important;
-      top: 50% !important;
-      transform: translateY(-50%) !important;
-      width: 45px !important;
-      height: 45px !important;
+      width: 50px !important;
+      height: 50px !important;
       border-radius: 50% !important;
       background: linear-gradient(135deg, #64ffda 0%, #12c2e9 100%) !important;
       border: none !important;
       color: #1a1d23 !important;
-      font-weight: 600 !important;
-      font-size: 16px !important;
+      font-weight: 700 !important;
+      font-size: 20px !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       cursor: pointer !important;
       transition: all 0.3s ease !important;
-      min-width: 45px !important;
-      min-height: 45px !important;
+      min-width: 50px !important;
+      min-height: 50px !important;
       flex-shrink: 0 !important;
+      margin-left: 10px !important;
     }
 
     #send-btn #btn-text {
-      font-size: 14px !important;
+      display: block !important;
+      font-size: 16px !important;
       font-weight: bold !important;
     }
 
     #send-btn:hover, #send-btn:active {
       background: linear-gradient(135deg, #4fd1c7 0%, #0ea5e9 100%) !important;
-      transform: translateY(-50%) scale(1.05) !important;
+      transform: scale(1.1) !important;
+      box-shadow: 0 4px 15px rgba(100, 255, 218, 0.4) !important;
     }
 
     /* Adjust chat history to leave space for fixed input */

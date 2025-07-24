@@ -798,14 +798,46 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // WebSocket setup
+    // WebSocket setup with auto-reconnection
     var websocketstring = "";
     if (window.location.hostname == "127.0.0.1") {
         websocketstring = "ws://127.0.0.1:8000/ws";
     } else {
         websocketstring = `wss://${window.location.hostname}/ws`;
     }
-    var websocket = new WebSocket(websocketstring);
+    
+    var websocket;
+    var reconnectAttempts = 0;
+    var maxReconnectAttempts = 5;
+    
+    function connectWebSocket() {
+        websocket = new WebSocket(websocketstring);
+        
+        websocket.onopen = function(event) {
+            console.log('🔌 WebSocket connected');
+            reconnectAttempts = 0;
+        };
+        
+        websocket.onclose = function(event) {
+            console.log('🔌 WebSocket disconnected');
+            // Auto-reconnect with exponential backoff
+            if (reconnectAttempts < maxReconnectAttempts) {
+                const delay = Math.pow(2, reconnectAttempts) * 1000; // 1s, 2s, 4s, 8s, 16s
+                console.log(`🔄 Reconnecting in ${delay}ms...`);
+                setTimeout(connectWebSocket, delay);
+                reconnectAttempts++;
+            } else {
+                console.log('❌ Max reconnection attempts reached. Using AJAX fallback.');
+            }
+        };
+        
+        websocket.onerror = function(error) {
+            console.error('❌ WebSocket error:', error);
+        };
+    }
+    
+    // Initialize WebSocket connection
+    connectWebSocket();
     
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');
@@ -934,8 +966,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Stream HTML text effect with real-time scrolling
-    function streamHTMLText(element, htmlContent, speed = 25) {
+    // Stream HTML text effect with faster speed for WebSocket
+    function streamHTMLText(element, htmlContent, speed = 8) {
         return new Promise((resolve) => {
             // Create a temporary div to parse the HTML
             const tempDiv = document.createElement('div');
@@ -953,7 +985,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     i++;
                     
                     // Smooth scroll with every few characters for better performance
-                    if (i % 3 === 0 || i === textContent.length) {
+                    if (i % 2 === 0 || i === textContent.length) {
                         scrollToBottom('auto'); // Use 'auto' for real-time, 'smooth' for final
                     }
                     
@@ -963,7 +995,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         element.innerHTML = htmlContent;
                         scrollToBottom('smooth');
-                    }, 100);
+                    }, 50);
                     resolve();
                 }
             }
@@ -987,12 +1019,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Handle form submission
+    // Handle form submission - WebSocket with streaming
     chatForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const message = userInput.value.trim();
         if (!message) return;
+        
+        // Check WebSocket connection
+        if (websocket.readyState !== WebSocket.OPEN) {
+            console.log('WebSocket not connected, reconnecting...');
+            // Fallback to AJAX if WebSocket is not available
+            await handleAjaxFallback(message);
+            return;
+        }
         
         // Add user message
         addMessage(message, true);
@@ -1001,11 +1041,45 @@ document.addEventListener('DOMContentLoaded', function() {
         userInput.value = '';
         setLoading(true);
         
-        try {
-            // Create AI response placeholder
-            const aiMessageDiv = addMessage('', false);
+        // Create AI response placeholder
+        const aiMessageDiv = addMessage('', false);
+        
+        // Set up WebSocket response handler
+        const originalOnMessage = websocket.onmessage;
+        
+        websocket.onmessage = async function(event) {
+            const response = event.data;
             
-            // Send request to server
+            // Stream the response with cool effect (faster speed)
+            await streamHTMLText(aiMessageDiv, response, 8);
+            
+            setLoading(false);
+            userInput.focus();
+            
+            // Restore original message handler
+            websocket.onmessage = originalOnMessage;
+        };
+        
+        // Send message via WebSocket
+        try {
+            websocket.send(message);
+        } catch (error) {
+            console.error('WebSocket send error:', error);
+            // Fallback to AJAX
+            await handleAjaxFallback(message, aiMessageDiv);
+        }
+    });
+    
+    // AJAX fallback function
+    async function handleAjaxFallback(message, aiMessageDiv = null) {
+        if (!aiMessageDiv) {
+            addMessage(message, true);
+            userInput.value = '';
+            setLoading(true);
+            aiMessageDiv = addMessage('', false);
+        }
+        
+        try {
             const formData = new FormData();
             formData.append('user_input', message);
 
@@ -1018,11 +1092,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    // Stream the AI response with HTML rendering
-                    await streamHTMLText(aiMessageDiv, data.response, 20);
-                    
-                    // Final smooth scroll after streaming completes
-                    setTimeout(() => scrollToBottom('smooth'), 150);
+                    // Stream the response with cool effect
+                    await streamHTMLText(aiMessageDiv, data.response, 8);
                 } else {
                     aiMessageDiv.innerHTML = data.response || 'Sorry, I encountered an error. Please try again.';
                     scrollToBottom('smooth');
@@ -1032,13 +1103,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 scrollToBottom('smooth');
             }
         } catch (error) {
-            console.error('Error:', error);
-            const errorDiv = addMessage('Sorry, something went wrong. Please try again.', false);
+            console.error('AJAX Error:', error);
+            aiMessageDiv.textContent = 'Sorry, something went wrong. Please try again.';
+            scrollToBottom('smooth');
         } finally {
             setLoading(false);
             userInput.focus();
         }
-    });
+    }
     
     // Enter key support
     userInput.addEventListener('keypress', function(e) {

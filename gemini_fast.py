@@ -220,17 +220,32 @@ async def websocket_endpoint(websocket: WebSocket):
             user_input = await websocket.receive_text()
             print(f"👤 Received: {user_input}")
             
-            # Process with Gemini
-            chat = model.start_chat(history=websocket_chat_history)
-            response = chat.send_message(user_input)
-            
-            # Update WebSocket chat history
-            websocket_chat_history.append({'role': 'user', 'parts': [user_input]})
-            websocket_chat_history.append({'role': 'model', 'parts': [response.text]})
-            
-            # Send response back to client
-            await websocket.send_text(response.text)
-            print(f"🤖 Sent: {response.text[:50]}...")
+            try:
+                # Process with Gemini
+                chat = model.start_chat(history=websocket_chat_history)
+                response = chat.send_message(user_input)
+                
+                # Format the AI response with bullets and structure (same as AJAX)
+                formatted_response = format_ai_response(response.text)
+                
+                # Update WebSocket chat history
+                websocket_chat_history.append({'role': 'user', 'parts': [user_input]})
+                websocket_chat_history.append({'role': 'model', 'parts': [formatted_response]})
+                
+                # Send formatted response back to client
+                await websocket.send_text(formatted_response)
+                print(f"🤖 Sent: {formatted_response[:50]}...")
+                
+            except Exception as e:
+                # Handle errors gracefully in WebSocket
+                if "ResourceExhausted" in str(e) or "429" in str(e):
+                    error_message = '<div class="error-message">⚠️ API quota exceeded. Please try again in a few minutes.</div>'
+                else:
+                    error_message = f'<div class="error-message">❌ Error: {str(e)}</div>'
+                
+                # Send error message to client
+                await websocket.send_text(error_message)
+                print(f"❌ Error sent: {str(e)}")
             
     except WebSocketDisconnect:
         print(f"🔌 WebSocket connection closed")

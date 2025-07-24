@@ -651,8 +651,9 @@
     .input-group {
       display: flex !important;
       align-items: center !important;
-      gap: 10px !important;
+      gap: 0px !important;
       width: 100% !important;
+      position: relative !important;
     }
 
     #user-input {
@@ -660,14 +661,23 @@
       font-size: 16px !important;
       min-height: 44px !important;
       border-radius: 25px !important;
+      padding: 12px 60px 12px 15px !important;
+      text-align: left !important;
+      direction: ltr !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
 
     .btn-send {
-      width: 50px !important;
-      height: 50px !important;
+      position: absolute !important;
+      right: 5px !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      width: 45px !important;
+      height: 45px !important;
       border-radius: 50% !important;
       flex-shrink: 0 !important;
-      min-width: 50px !important;
+      min-width: 45px !important;
       padding: 0 !important;
       display: flex !important;
       align-items: center !important;

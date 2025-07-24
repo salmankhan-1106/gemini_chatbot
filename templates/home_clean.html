@@ -1,0 +1,443 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .chat-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    position: relative;
+  }
+  
+  .chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .chat-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: headerShimmer 3s ease-in-out infinite;
+  }
+  
+  @keyframes headerShimmer {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+  }
+  
+  .chat-header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 2.5rem;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(45deg, #fff, #f0f0f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .chat-header .subtitle {
+    margin: 10px 0 15px 0;
+    opacity: 0.95;
+    font-size: 1.2rem;
+    font-weight: 400;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .tech-badges {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+  
+  .tech-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .tech-badge:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+  }
+  
+  .chat-history-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: none;
+    border-radius: 0;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  
+  .chat-history {
+    padding: 30px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+  }
+  
+  .chat-message {
+    margin: 15px 0;
+    padding: 20px 25px;
+    border-radius: 25px;
+    max-width: 75%;
+    word-wrap: break-word;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    animation: messageSlideIn 0.5s ease-out;
+    position: relative;
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+  
+  @keyframes messageSlideIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(30px) scale(0.9); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0) scale(1); 
+    }
+  }
+  
+  .user-input {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-left: auto;
+    border-radius: 25px 25px 5px 25px;
+    text-align: right;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+  }
+  
+  .user-input::before {
+    content: '👤';
+    position: absolute;
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    background: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  
+  .ai-response {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    margin-right: auto;
+    border-radius: 25px 25px 25px 5px;
+    box-shadow: 0 8px 32px rgba(17, 153, 142, 0.4);
+  }
+  
+  .ai-response::before {
+    content: '🤖';
+    position: absolute;
+    left: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    background: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  
+  .empty-chat {
+    text-align: center;
+    color: #64748b;
+    padding: 80px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .welcome-icon {
+    font-size: 5rem;
+    margin-bottom: 25px;
+    display: block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+  }
+  
+  .empty-chat h3 {
+    color: #334155;
+    margin-bottom: 15px;
+    font-weight: 600;
+    font-size: 1.8rem;
+  }
+  
+  .empty-chat p {
+    color: #64748b;
+    font-size: 1.2rem;
+    max-width: 400px;
+    line-height: 1.6;
+  }
+  
+  .input-container {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 25px 30px;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+    flex-shrink: 0;
+    position: relative;
+  }
+  
+  .input-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.6), transparent);
+  }
+  
+  .input-group {
+    max-width: 100%;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+  
+  .form-control {
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 30px;
+    padding: 18px 25px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    flex: 1;
+    backdrop-filter: blur(10px);
+  }
+  
+  .form-control:focus {
+    border-color: rgba(102, 126, 234, 0.8);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2), inset 0 2px 4px rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.15);
+    color: white;
+    outline: none;
+  }
+  
+  .form-control::placeholder {
+    color: rgba(255,255,255,0.6);
+  }
+  
+  .btn-send {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 30px;
+    padding: 18px 35px;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .btn-send::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s ease;
+  }
+  
+  .btn-send:hover::before {
+    left: 100%;
+  }
+  
+  .btn-send:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  }
+  
+  .btn-send:active {
+    transform: translateY(-1px);
+  }
+  
+  /* Professional scrollbar */
+  .chat-history-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .chat-history-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+  }
+  
+  .chat-history-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+  }
+  
+  .chat-history-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .chat-header h1 {
+      font-size: 2rem;
+    }
+    
+    .chat-header .subtitle {
+      font-size: 1rem;
+    }
+    
+    .tech-badges {
+      justify-content: center;
+    }
+    
+    .chat-message {
+      max-width: 85%;
+      padding: 16px 20px;
+    }
+    
+    .chat-history {
+      padding: 20px;
+    }
+    
+    .input-container {
+      padding: 20px;
+    }
+    
+    .form-control {
+      padding: 15px 20px;
+      font-size: 1rem;
+    }
+    
+    .btn-send {
+      padding: 15px 25px;
+      font-size: 1rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .chat-header h1 {
+      font-size: 1.8rem;
+    }
+    
+    .tech-badge {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+    }
+    
+    .input-group {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .btn-send {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="chat-container">
+  <div class="chat-header">
+    <h1>🚀 AI Assistant Pro</h1>
+    <p class="subtitle">Powered by Google Gemini & FastAPI</p>
+    <div class="tech-badges">
+      <span class="tech-badge">Python</span>
+      <span class="tech-badge">FastAPI</span>
+      <span class="tech-badge">Gemini AI</span>
+      <span class="tech-badge">Full-Stack</span>
+    </div>
+  </div>
+
+  <div class="chat-history-container">
+    <div class="chat-history">
+      {% if chat_responses %}
+        {% for response in chat_responses %}
+        <div class="{{ 'chat-message user-input' if loop.index0 is even else 'chat-message ai-response' }}">
+          {{ response }}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-chat">
+          <div class="welcome-icon">🤖</div>
+          <h3>Welcome to AI Assistant Pro</h3>
+          <p>Experience intelligent conversations powered by cutting-edge AI technology. Ask me anything!</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="input-container">
+    <form method="post" action="/">
+      <div class="input-group">
+        <input class="form-control" name="user_input" placeholder="Ask me anything..." required>
+        <button class="btn-send" type="submit">
+          Send →
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

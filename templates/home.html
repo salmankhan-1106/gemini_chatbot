@@ -633,6 +633,86 @@
       display: none;
     }
   }
+
+  /* 📱 MOBILE INPUT CONTAINER FIX */
+  @media (max-width: 768px) {
+    .input-container {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      padding: 15px !important;
+      background: rgba(26, 29, 35, 0.95) !important;
+      backdrop-filter: blur(10px) !important;
+      border-top: 1px solid rgba(100, 255, 218, 0.2) !important;
+      z-index: 1000 !important;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .input-wrapper {
+      display: flex !important;
+      align-items: center !important;
+      position: relative !important;
+      max-width: 100% !important;
+    }
+
+    #user-input {
+      flex: 1 !important;
+      padding: 12px 60px 12px 15px !important;
+      font-size: 16px !important; /* Prevents zoom on iOS */
+      border-radius: 25px !important;
+      border: 2px solid rgba(100, 255, 218, 0.3) !important;
+      background: rgba(45, 55, 72, 0.8) !important;
+      color: #e2e8f0 !important;
+      min-height: 44px !important; /* iOS minimum touch target */
+      outline: none !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    #user-input:focus {
+      border-color: #64ffda !important;
+      box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.1) !important;
+    }
+
+    #send-btn {
+      position: absolute !important;
+      right: 5px !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      width: 40px !important;
+      height: 40px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, #64ffda 0%, #12c2e9 100%) !important;
+      border: none !important;
+      color: #1a1d23 !important;
+      font-weight: 600 !important;
+      font-size: 18px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      transition: all 0.3s ease !important;
+      min-width: 40px !important;
+      min-height: 40px !important;
+    }
+
+    #send-btn:hover, #send-btn:active {
+      background: linear-gradient(135deg, #4fd1c7 0%, #0ea5e9 100%) !important;
+      transform: translateY(-50%) scale(1.05) !important;
+    }
+
+    /* Adjust chat history to leave space for fixed input */
+    .chat-history {
+      padding-bottom: 100px !important; /* Space for fixed input */
+      max-height: calc(100vh - 200px) !important;
+    }
+
+    /* Ensure main chat container doesn't overlap */
+    .chat-container {
+      padding-bottom: 80px !important;
+    }
+  }
 </style>
 
 <div class="chat-container">

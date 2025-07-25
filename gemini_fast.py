@@ -13,7 +13,6 @@ load_dotenv()
 
 genai.configure(api_key= os.getenv("GOOGLE_API_KEY"))
 
-# Remove the global chat_history - we'll use sessions instead
 
 model= genai.GenerativeModel('gemini-1.5-flash', system_instruction="you are a very usefull agent whihch \
                              has a lot of knowledge of the world and can help in everything including programming, fitness,\
@@ -56,9 +55,19 @@ async def chat_page(request: Request):
 
 def format_ai_response(text):
     """
-    Format AI response with proper bullets, headers, and structure
+    Format AI response with proper markdown conversion and structure
     """
-    # Split text into lines
+    # First, convert markdown formatting to HTML
+    # Convert bold text (**text** -> <strong>text</strong>)
+    text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
+    
+    # Convert italic text (*text* -> <em>text</em>)
+    text = re.sub(r'(?<!\*)\*([^*]+)\*(?!\*)', r'<em>\1</em>', text)
+    
+    # Convert inline code (`code` -> <code>code</code>)
+    text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
+    
+    # Split text into lines for line-by-line processing
     lines = text.split('\n')
     formatted_lines = []
     
@@ -68,10 +77,16 @@ def format_ai_response(text):
             formatted_lines.append('<br>')
             continue
             
-        # Format headers (text with ** or numbered sections)
-        if line.startswith('**') and line.endswith('**'):
-            header_text = line.replace('**', '')
+        # Format headers (text with ### or ## or #)
+        if line.startswith('###'):
+            header_text = line.replace('###', '').strip()
             formatted_lines.append(f'<h4 class="response-header">{header_text}</h4>')
+        elif line.startswith('##'):
+            header_text = line.replace('##', '').strip()
+            formatted_lines.append(f'<h3 class="response-header">{header_text}</h3>')
+        elif line.startswith('#'):
+            header_text = line.replace('#', '').strip()
+            formatted_lines.append(f'<h2 class="response-header">{header_text}</h2>')
         
         # Format numbered points (1. 2. 3. etc.)
         elif re.match(r'^\d+\.\s', line):

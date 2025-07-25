@@ -57,25 +57,125 @@ def format_ai_response(text):
     """
     Format AI response with proper markdown conversion and structure
     """
-    # First, convert markdown formatting to HTML
+    # First, handle code blocks (```code```) with proper indentation
+    def format_code_block(match):
+        language = match.group(1) if match.group(1) else ''
+        code_content = match.group(2)
+        
+        # Preserve original indentation by finding the minimum indent
+        lines = code_content.split('\n')
+        non_empty_lines = [line for line in lines if line.strip()]
+        
+        if non_empty_lines:
+            # Find minimum indentation (excluding empty lines)
+            min_indent = min(len(line) - len(line.lstrip()) for line in non_empty_lines)
+            # Remove only the minimum common indentation, preserve relative indentation
+            formatted_lines = []
+            for line in lines:
+                if line.strip():  # Non-empty line
+                    # Only remove min_indent if the line has at least that much indentation
+                    if len(line) >= min_indent and line[:min_indent].isspace():
+                        formatted_lines.append(line[min_indent:])
+                    else:
+                        formatted_lines.append(line)
+                else:  # Empty line
+                    formatted_lines.append('')
+            code_content = '\n'.join(formatted_lines)
+        
+        # Remove leading and trailing empty lines only
+        code_content = code_content.strip('\n')
+        
+        return f'<pre><code class="language-{language}">{code_content}</code></pre>'
+    
+    # Convert multi-line code blocks with language specification
+    text = re.sub(r'```(\w+)?\n(.*?)\n```', format_code_block, text, flags=re.DOTALL)
+    
+    # Convert simple code blocks without language
+    def format_simple_code_block(match):
+        code_content = match.group(1)
+        
+        # Preserve indentation for simple code blocks too
+        lines = code_content.split('\n')
+        non_empty_lines = [line for line in lines if line.strip()]
+        
+        if non_empty_lines:
+            # Find minimum indentation (excluding empty lines)
+            min_indent = min(len(line) - len(line.lstrip()) for line in non_empty_lines)
+            # Remove only the minimum common indentation
+            formatted_lines = []
+            for line in lines:
+                if line.strip():  # Non-empty line
+                    if len(line) >= min_indent and line[:min_indent].isspace():
+                        formatted_lines.append(line[min_indent:])
+                    else:
+                        formatted_lines.append(line)
+                else:  # Empty line
+                    formatted_lines.append('')
+            code_content = '\n'.join(formatted_lines)
+        
+        # Remove leading and trailing empty lines only
+        code_content = code_content.strip('\n')
+        
+        return f'<pre><code>{code_content}</code></pre>'
+    
+    text = re.sub(r'```\n(.*?)\n```', format_simple_code_block, text, flags=re.DOTALL)
+    
     # Convert bold text (**text** -> <strong>text</strong>)
     text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
     
     # Convert italic text (*text* -> <em>text</em>)
     text = re.sub(r'(?<!\*)\*([^*]+)\*(?!\*)', r'<em>\1</em>', text)
     
-    # Convert inline code (`code` -> <code>code</code>)
-    text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
+    # Convert inline code (`code` -> <code>code</code>) - but not inside pre blocks
+    def replace_inline_code(text):
+        lines = text.split('\n')
+        result_lines = []
+        in_pre_block = False
+        
+        for line in lines:
+            if '<pre>' in line:
+                in_pre_block = True
+            elif '</pre>' in line:
+                in_pre_block = False
+            elif not in_pre_block:
+                line = re.sub(r'`([^`]+)`', r'<code>\1</code>', line)
+            result_lines.append(line)
+        
+        return '\n'.join(result_lines)
+    
+    text = replace_inline_code(text)
     
     # Split text into lines for line-by-line processing
     lines = text.split('\n')
     formatted_lines = []
     
+    # Track consecutive empty lines to reduce spacing
+    consecutive_empty = 0
+    in_pre_block = False
+    
     for line in lines:
-        line = line.strip()
-        if not line:
-            formatted_lines.append('<br>')
+        # Check if we're inside a pre block
+        if '<pre>' in line:
+            in_pre_block = True
+        elif '</pre>' in line:
+            in_pre_block = False
+            
+        # If we're inside a pre block, don't modify the line
+        if in_pre_block or '<pre>' in line or '</pre>' in line or line.strip().startswith('<code'):
+            formatted_lines.append(line)
             continue
+            
+        original_line = line
+        line = line.strip()
+        
+        # Handle empty lines - limit consecutive empty lines to 1
+        if not line:
+            consecutive_empty += 1
+            if consecutive_empty <= 1:
+                formatted_lines.append('<br>')
+            continue
+        else:
+            consecutive_empty = 0
             
         # Format headers (text with ### or ## or #)
         if line.startswith('###'):
